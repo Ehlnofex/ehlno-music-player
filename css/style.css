@@ -1,0 +1,49 @@
+/*
+Copyright Thomas Vinckenbosch
+    thomas@vckb.fr
+*/
+/* 
+    Created on : Jul 26, 2014, 10:34:29 PM
+    Author     : thomas
+*/
+
+.row {
+    padding: 15px;
+}
+
+.row-title {
+    padding: 0px;
+    text-align: center;
+}
+
+.title {
+    border-bottom: 2px solid #222;
+}
+
+table.table.table-striped tr.selected-row td {
+    color: #FFF;
+    background-color: #F0AD4E;
+}
+
+.grey_layer {
+    background-color: grey;
+    opacity: 0.5;
+    z-index: 20;
+    height: 100%;
+    width: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.load_spin {
+    width: 10em;
+    
+}
+
+.nav-sidebar {
+    max-height: 50em;
+    overflow-y: scroll;
+}
