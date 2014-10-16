@@ -59,6 +59,7 @@ function populateMusicTable(response) {
         
         tableRow = document.createElement('tr');
         tableRow.setAttribute('data-mpeg', result['path']);
+        tableRow.setAttribute('data-id', id);
         
         rowButton = document.createElement('td');
         rowButton.innerHTML = '<button type="button" class="play_this btn btn-default" click="playItem(this.parentNode)"><span class="fa fa-play"></span></button>';
@@ -77,6 +78,7 @@ function populateMusicTable(response) {
         tableRow.appendChild(rowArtist);
         
         rowPlaylist = document.createElement('td');
+        rowPlaylist.innerHTML = '<button class="btn btn-default modal-opener" data-target="#man-modal"><span class="fa fa-pencil"></span></button>';
         tableRow.appendChild(rowPlaylist);
         
         tableBody.appendChild(tableRow);
@@ -427,7 +429,171 @@ function setPlayerListeners() {
 }
 
 /*
- * V. PAGE SWITCHING
+ * V. FILES AND PLAYLISTS MANAGEMENT
+ */
+
+function setModalTitle(title, artist, album) {
+    document.getElementById('modal-header-title').innerHTML = title + ' - '
+            + artist + ' - ' + album;
+}
+
+function createPlaylistSelector(playlist_name, selected) {
+    plElement = document.createElement('li');
+    plElement.setAttribute('data-pl', playlist_name);
+    plElement.setAttribute('data-action', '');
+    
+    checkElement = document.createElement('input');
+    checkElement.setAttribute('type', 'checkbox');
+    checkElement.checked = selected;
+    plElement.appendChild(checkElement);
+    
+    spanElement = document.createElement('span');
+    spanElement.innerHTML = playlist_name;
+    plElement.appendChild(spanElement);
+    
+    return plElement;
+}
+
+function setModalBody(jsonData) {
+    document.getElementById('modal-body').innerHTML = '';
+    var music_id = jsonData['music']['_id']['$id'];
+    
+    plListElement = document.createElement('ul');
+    plListElement.setAttribute('data-id', music_id);
+    
+    for (var plId in jsonData['playlist']) {
+        var result = jsonData['playlist'][plId];
+        
+        var selected = false;
+        for (var i = 0; i < result['songs'].length; i++) {
+            if (result['songs'][i]['$id'] === music_id) {
+                selected = true;
+            }
+        }
+        
+        plListElement.appendChild(createPlaylistSelector(result['name'],
+                                                         selected));
+    }
+    
+    plElement = document.createElement('li');
+    plElement.setAttribute('data-pl', '');
+    plElement.setAttribute('data-action', '');
+
+    inputElement = document.createElement('input');
+    inputElement.setAttribute('type', 'text');
+    plElement.appendChild(inputElement);
+
+    buttonElement = document.createElement('button');
+    buttonElement.setAttribute('data-id', jsonData['music']['_id']['$id']);
+    buttonElement.setAttribute('class', 'btn btn-default btn-sm');
+    buttonSpanElement = document.createElement('span');
+    buttonSpanElement.setAttribute('class', 'fa fa-plus');
+    buttonElement.appendChild(buttonSpanElement);
+    plElement.appendChild(buttonElement);
+
+    plListElement.appendChild(plElement);
+
+    buttonElement.addEventListener('click', function(e) {
+        var inputId = e.target.getAttribute('data-id');
+        var inputValue = $(this).parent().children().first().val();
+        if (inputValue !== '') {
+            // Add new playlist
+            var sendUrl = 'add_playlist.php?name=' + inputValue;
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
+                    // Get response text in json and update modal
+                    var xhr2 = new XMLHttpRequest();
+                    xhr2.onreadystatechange = function () {
+                        if (xhr2.readyState === 4 && (xhr2.status === 200 || xhr2.status === 0)) {
+                            // Get response text in json and update modal
+                            var jsonResponse = JSON.parse(xhr2.responseText);
+                            setModalBody(jsonResponse);
+                        }
+                    };
+                    xhr2.open('GET', 'get_music.php?id=' + inputId, true);
+                    xhr2.send(null);
+                }
+            };
+            xhr.open('GET', sendUrl, true);
+            xhr.send(null);
+        }
+    });
+    
+    document.getElementById('modal-body').appendChild(plListElement);
+}
+
+function setModalListeners() {
+    $(document).on('click', '.modal-opener', function () {
+        var rowNode = $(this).parent().parent();
+        var data_id = rowNode.attr('data-id');
+
+        var sendUrl = 'get_music.php?id=' + data_id;
+
+        var xhr = new XMLHttpRequest();
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
+                // Get response text in json and show modal
+                var jsonResponse = JSON.parse(xhr.responseText);
+                setModalTitle(jsonResponse['music']['title'], jsonResponse['music']['artist'], jsonResponse['music']['album']);
+                setModalBody(jsonResponse);
+                $('#man-modal').modal('show');
+            }
+        };
+        xhr.open('GET', sendUrl, true);
+        xhr.send(null);
+    });
+    
+    document.getElementById('modal-delete').addEventListener('click', function() {
+        var content = document.getElementById('modal-body');
+        
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
+                var content = document.getElementById('page_content');
+                content.innerHTML = '';
+                var tableNode = insertTableNode(document.getElementById('page_content'));
+                tableNode = insertTableHead(tableNode);
+                tableNode = insertTableBody(tableNode);
+                getMusicList('', '', '');
+                $('#man-modal').modal('hide');
+            }
+        };
+        xhr.open('GET',
+                 'delete_song.php?id=' + content.childNodes[0].getAttribute('data-id'),
+                 true);
+        xhr.send(null);
+    });
+    
+    document.getElementById('modal-update').addEventListener('click', function() {
+        var content = document.getElementById('modal-body');
+        var elementList = content.childNodes[0];
+        
+        var jsonObj = new Object();
+        jsonObj['id'] = elementList.getAttribute('data-id');
+        jsonObj['playlists'] = [];
+        for (var i = 0; i < elementList.childNodes.length - 1; i++) {
+            jsonObj['playlists'].push({
+                'name': elementList.childNodes[i].childNodes[1].innerHTML,
+            'selected': elementList.childNodes[i].childNodes[0].checked
+            });
+        }
+        
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
+                $('#man-modal').modal('hide');
+            }
+        };
+        xhr.open('POST', 'update_playlist.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.send('jsonObj=' + JSON.stringify(jsonObj));
+    });
+}
+
+/*
+ * VI. PAGE SWITCHING
  */
 
 // Set the listeners for the navbar links
@@ -470,7 +636,7 @@ function setSwitchListeners() {
 }
 
 /*
- * VI. ON FIRST LAUNCH
+ * VII. ON FIRST LAUNCH
  */
 getMusicList();
 var tableNode = insertTableNode(document.getElementById('page_content'));
@@ -478,3 +644,4 @@ tableNode = insertTableHead(tableNode);
 tableNode = insertTableBody(tableNode);
 setSwitchListeners();
 setPlayerListeners();
+setModalListeners();

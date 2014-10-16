@@ -1,5 +1,5 @@
 <?php
-/* 
+/*
  * Copyright Thomas Vinckenbosch
  *     thomas@vckb.fr
  */
@@ -57,6 +57,25 @@
 
                 <div id="page_content" class="row">
                 </div>
+                <!-- Modal -->
+                <div class="modal fade" id="man-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div id="modal-header" class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                                <h4 id="modal-header-title" class="modal-title" id="myModalLabel">Modal title</h4>
+                            </div>
+                            <div id="modal-body" class="modal-body">
+                                ...
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <button id="modal-update" type="button" class="btn btn-primary">Update</button>
+                                <button id="modal-delete" type="button" class="btn btn-danger">Delete song</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <footer>
@@ -69,10 +88,10 @@
             </footer>
         </div>
     </div>
-    
+
     <!-- Music player -->
     <audio id="player"></audio>
-    
+
     <!-- Bootstrap JS -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="includes/js/bootstrap.min.js"></script>
