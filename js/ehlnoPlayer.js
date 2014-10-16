@@ -77,6 +77,7 @@ function populateMusicTable(response) {
         tableRow.appendChild(rowArtist);
         
         rowPlaylist = document.createElement('td');
+        rowPlaylist.innerHTML = '<button class="btn btn-default modal-opener" data-target="#man-modal"><span class="fa fa-pencil"></span></button>';
         tableRow.appendChild(rowPlaylist);
         
         tableBody.appendChild(tableRow);
@@ -427,7 +428,33 @@ function setPlayerListeners() {
 }
 
 /*
- * V. PAGE SWITCHING
+ * V. FILES AND PLAYLISTS MANAGEMENT
+ */
+$(document).on("click", ".modal-opener", function () {
+    var rowNode = $(this).parent().parent();
+    
+    var title = rowNode.children().first().next().text();
+    var artist = rowNode.children().first().next().next().text();
+    var album = rowNode.children().first().next().next().next().text();
+    
+    var data = rowNode.attr('data-mpeg');
+    
+    setModalTitle(title, artist, album);
+    setModalBody(data);
+    $('#man-modal').modal('show');
+});
+
+function setModalTitle(title, artist, album) {
+    document.getElementById('modal-header-title').innerHTML = title + ' - '
+            + artist + ' - ' + album;
+}
+
+function setModalBody(data) {
+    document.getElementById('modal-body').innerHTML = 'The music is: ' + data;
+}
+
+/*
+ * VI. PAGE SWITCHING
  */
 
 // Set the listeners for the navbar links
@@ -470,7 +497,7 @@ function setSwitchListeners() {
 }
 
 /*
- * VI. ON FIRST LAUNCH
+ * VII. ON FIRST LAUNCH
  */
 getMusicList();
 var tableNode = insertTableNode(document.getElementById('page_content'));
