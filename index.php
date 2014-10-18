@@ -70,6 +70,8 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <button id="modal-update" type="button" class="btn btn-primary">Update</button>
+                                <button id="modal-delete" type="button" class="btn btn-danger">Delete song</button>
                             </div>
                         </div>
                     </div>
