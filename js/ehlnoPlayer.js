@@ -440,7 +440,6 @@ function setModalTitle(title, artist, album) {
 function createPlaylistSelector(playlist_name, selected) {
     plElement = document.createElement('li');
     plElement.setAttribute('data-pl', playlist_name);
-    plElement.setAttribute('data-action', '');
     
     checkElement = document.createElement('input');
     checkElement.setAttribute('type', 'checkbox');
@@ -450,6 +449,40 @@ function createPlaylistSelector(playlist_name, selected) {
     spanElement = document.createElement('span');
     spanElement.innerHTML = playlist_name;
     plElement.appendChild(spanElement);
+    
+    buttonElement = document.createElement('button');
+    buttonElement.setAttribute('data-name', playlist_name);
+    buttonElement.setAttribute('class', 'btn btn-danger btn-sm');
+    buttonSpanElement = document.createElement('span');
+    buttonSpanElement.setAttribute('class', 'fa fa-times');
+    buttonElement.appendChild(buttonSpanElement);
+    plElement.appendChild(buttonElement);
+    
+    buttonElement.addEventListener('click', function(e) {
+        var inputId = $(this).parent().parent().attr('data-id');
+        var pl_name = $(this).attr('data-name');
+        if (pl_name !== '') {
+            var sendUrl = 'delete_playlist.php?name=' + pl_name;
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
+                    // Get response text in json and update modal
+                    var xhr2 = new XMLHttpRequest();
+                    xhr2.onreadystatechange = function () {
+                        if (xhr2.readyState === 4 && (xhr2.status === 200 || xhr2.status === 0)) {
+                            // Get response text in json and update modal
+                            var jsonResponse = JSON.parse(xhr2.responseText);
+                            setModalBody(jsonResponse);
+                        }
+                    };
+                    xhr2.open('GET', 'get_music.php?id=' + inputId, true);
+                    xhr2.send(null);
+                }
+            };
+            xhr.open('GET', sendUrl, true);
+            xhr.send(null);
+        }
+    });
     
     return plElement;
 }
