@@ -1,7 +1,0 @@
-# TODO
-
-* add edit button on song table
-        -> modal: manage song w/ playlists, delete song
-            * add to a playlist (possibly a new one)
-            * delete
-* Music listing: side filters: artist/album/playlist

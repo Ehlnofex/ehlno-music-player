@@ -87,28 +87,85 @@ function populateMusicTable(response) {
     return tableBody;
 }
 
+function setPlaylistFilters(response) {
+    var jsonData = JSON.parse(response);
+    var pageContent = document.getElementById('page_content');
+    
+    var elt = document.getElementById('pl_filters');
+    if (elt) {
+        elt.parentNode.removeChild(elt);
+    }
+    
+    var divGlob = document.createElement('div');
+    divGlob.setAttribute('class', 'col-md-2');
+    divGlob.setAttribute('id', 'pl_filters');
+    
+    var ulElement = document.createElement('ul');
+    ulElement.setAttribute('class', 'nav nav-sidebar');
+    divGlob.appendChild(ulElement);
+    
+    var liElement = document.createElement('li');
+
+    var aElement = document.createElement('a');
+    aElement.setAttribute('href', '#');
+    aElement.innerHTML = 'Show all';
+
+    aElement.addEventListener('click', function () {
+        var content = document.getElementById('page_content');
+        content.innerHTML = '';
+        var tableNode = insertTableNode(document.getElementById('page_content'));
+        tableNode = insertTableHead(tableNode);
+        tableNode = insertTableBody(tableNode);
+        getMusicList('');
+    });
+
+    liElement.appendChild(aElement);
+        
+    ulElement.appendChild(liElement);
+    
+    for (var plId in jsonData) {
+        var liElement = document.createElement('li');
+        
+        var aElement = document.createElement('a');
+        aElement.setAttribute('href', '#');
+        aElement.setAttribute('data-name', jsonData[plId]['name']);
+        aElement.innerHTML = jsonData[plId]['name'];
+        
+        aElement.addEventListener('click', function (e) {
+            var content = document.getElementById('page_content');
+            content.innerHTML = '';
+            var tableNode = insertTableNode(document.getElementById('page_content'));
+            tableNode = insertTableHead(tableNode);
+            tableNode = insertTableBody(tableNode);
+            getMusicList(e.target.getAttribute('data-name'));
+        });
+        
+        liElement.appendChild(aElement);
+        
+        ulElement.appendChild(liElement);
+    }
+    
+    pageContent.appendChild(divGlob);
+}
+
+function getPlaylistFilters() {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
+            setPlaylistFilters(xhr.responseText);
+        }
+    };
+    xhr.open('GET', 'get_playlists.php', true);
+    xhr.send(null);
+}
+
 // An AJAX function to get the music
 // On result, populate the <tbody>
-function getMusicList(artistName, albumName, playlists) {
+function getMusicList(playlist) {
     
     var sendUrl = 'get_music.php';
-    if (artistName || albumName || playlists) {
-        sendUrl += '?';
-        if (artistName !== '') {
-            sendUrl += 'artist=' + artistName;
-        }
-        if (albumName !== '') {
-            if (artistName !== '') {
-                sendUrl += '&';
-            }
-            sendUrl += 'album=' + albumName;
-        }
-        if (playlists !== '') {
-            if (artistName !== '' || albumName !== '') {
-                sendUrl += '&';
-            }
-            sendUrl += 'playlist=' + playlists;
-        }
+    if (playlist !== '') {
+        sendUrl += '?playlist=' + encodeURIComponent(playlist);
     }
     
     var xhr = new XMLHttpRequest();
@@ -116,12 +173,16 @@ function getMusicList(artistName, albumName, playlists) {
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
             // Get response text in json and populate
+            console.log(xhr.responseText);
             populateMusicTable(xhr.responseText);
             addPlayButtonsToTable();
             if (player.src !== '') {
                 setSelected(player.getAttribute('src'));
             }
-            $('#music_list_table').dataTable();
+            $('#music_list_table').dataTable({
+                'dom': '<"col-md-10"lfrtip>'
+            });
+            getPlaylistFilters();
         }
     };
     
@@ -142,7 +203,6 @@ function insertTableNode(contentNode) {
 // Add "play" buttons to each table row
 function addPlayButtonsToTable() {
     var play_this_buttons_list = document.getElementsByClassName('play_this');
-    //console.log('Adding play buttons, length = ' + play_this_buttons_list.length);
     for (var i = 0; i < play_this_buttons_list.length; ++i) {
         //console.log('Button ' + i);
         play_this_buttons_list[i].addEventListener('click', function() {
@@ -569,7 +629,9 @@ function setModalListeners() {
             if (xhr.readyState === 4 && (xhr.status === 200 || xhr.status === 0)) {
                 // Get response text in json and show modal
                 var jsonResponse = JSON.parse(xhr.responseText);
-                setModalTitle(jsonResponse['music']['title'], jsonResponse['music']['artist'], jsonResponse['music']['album']);
+                setModalTitle(jsonResponse['music']['title'],
+                              jsonResponse['music']['artist'],
+                              jsonResponse['music']['album']);
                 setModalBody(jsonResponse);
                 $('#man-modal').modal('show');
             }
@@ -589,7 +651,7 @@ function setModalListeners() {
                 var tableNode = insertTableNode(document.getElementById('page_content'));
                 tableNode = insertTableHead(tableNode);
                 tableNode = insertTableBody(tableNode);
-                getMusicList('', '', '');
+                getMusicList('');
                 $('#man-modal').modal('hide');
             }
         };
@@ -643,7 +705,7 @@ function setSwitchListeners() {
         var tableNode = insertTableNode(document.getElementById('page_content'));
         tableNode = insertTableHead(tableNode);
         tableNode = insertTableBody(tableNode);
-        getMusicList('', '', '');
+        getMusicList('');
     });
     
     var index = document.getElementById('index_link');
@@ -655,7 +717,7 @@ function setSwitchListeners() {
         var tableNode = insertTableNode(document.getElementById('page_content'));
         tableNode = insertTableHead(tableNode);
         tableNode = insertTableBody(tableNode);
-        getMusicList('', '', '');
+        getMusicList('');
     });
     
     var upload = document.getElementById('upload_link');
@@ -671,7 +733,7 @@ function setSwitchListeners() {
 /*
  * VII. ON FIRST LAUNCH
  */
-getMusicList();
+getMusicList('');
 var tableNode = insertTableNode(document.getElementById('page_content'));
 tableNode = insertTableHead(tableNode);
 tableNode = insertTableBody(tableNode);
